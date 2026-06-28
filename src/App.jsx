@@ -18,7 +18,7 @@ export default function App() {
     <div className="min-h-screen bg-gray-50 flex">
       <aside className="w-56 bg-white border-r border-gray-200 flex flex-col shrink-0">
         <div className="px-5 py-5 border-b border-gray-100">
-          <h1 className="text-base font-semibold text-gray-800">PDF Editor</h1>
+          <h1 className="text-base font-semibold text-gray-800">도면편집기</h1>
           <p className="text-xs text-gray-400 mt-0.5">브라우저에서 바로 편집</p>
         </div>
         <nav className="p-3 flex-1 space-y-1">
