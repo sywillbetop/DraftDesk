@@ -139,3 +139,16 @@ test('viewToPdf: 90도 + CropBox 원점', () => {
   const pg = { w: 200, h: 100, x: 36, y: 20, rotation: 90 }
   expect(viewToPdf({ x: 100, y: 0 }, pg)).toEqual({ x: 36, y: 120 })
 })
+
+import { pickObject } from '../src/lib/geometry.js'
+
+test('pickObject: 배관은 넓은 범위로 잡히지만 도형 안쪽 클릭이 먼저다', () => {
+  const pipe = makePipe({ x: 0, y: 100 }, { x: 200, y: 100 }, '#DC2626', false)
+  const box = makeRect({ x: 50, y: 110 }, { x: 150, y: 200 }, '#DC2626')
+  // 배관에서 25pt 떨어진 빈 곳 → 배관 (보통 범위 8, 배관 범위 40)
+  expect(pickObject([pipe], { x: 20, y: 125 }, 8, 40)).toBe(pipe)
+  // 상자 안쪽이면서 배관 범위에도 들어가는 곳 → 상자가 먼저
+  expect(pickObject([pipe, box], { x: 100, y: 130 }, 8, 40)).toBe(box)
+  // 아무것도 없으면 null
+  expect(pickObject([pipe], { x: 20, y: 300 }, 8, 40)).toBe(null)
+})

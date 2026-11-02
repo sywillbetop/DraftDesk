@@ -3,7 +3,7 @@ import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { drawObject, drawSelection, HANDLE_PX } from '../lib/draw.js'
 import { distance, pinchScale } from '../lib/pinch.js'
 import {
-  makeRect, makePipe, makeText, hitTest, hitHandle, moveObject, resizeByHandle,
+  makeRect, makePipe, makeText, hitHandle, pickObject, moveObject, resizeByHandle,
 } from '../lib/geometry.js'
 
 const props = defineProps({ doc: { type: Object, required: true } })
@@ -136,6 +136,7 @@ let pinch = null
 const coarse = window.matchMedia?.('(pointer: coarse)').matches
 const handlePx = coarse ? 28 : HANDLE_PX
 const hitPx = coarse ? 24 : 8
+const pipeHitPx = coarse ? 48 : 16 // 선은 가늘어서 더 넓게
 
 function startPinch() {
   const [a, b] = [...pointers.values()]
@@ -167,11 +168,7 @@ function onDown(e) {
     if (handle) {
       drag = { mode: 'handle', id: sel.id, handle, orig: sel }
     } else {
-      const objs = doc.currentObjects.value
-      let hit = null
-      for (let i = objs.length - 1; i >= 0; i--) {
-        if (hitTest(objs[i], pt, hitPx / scale.value)) { hit = objs[i]; break }
-      }
+      const hit = pickObject(doc.currentObjects.value, pt, hitPx / scale.value, pipeHitPx / scale.value)
       if (hit) {
         if (doc.selectedId.value !== hit.id) navigator.vibrate?.(15) // 잡았다는 느낌
         doc.select(hit.id)

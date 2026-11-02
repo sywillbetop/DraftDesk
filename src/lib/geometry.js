@@ -64,6 +64,17 @@ export function hitTest(obj, pt, tolerance = 8) {
     && pt.y >= b.y - tolerance && pt.y <= b.y + b.h + tolerance
 }
 
+// 위에 그려진 것부터 찾는다. 1차는 보통 범위, 못 찾으면 2차로 배관만 넓은 범위(손가락용)로 다시 찾는다
+export function pickObject(objects, pt, tolerance, pipeTolerance) {
+  for (let i = objects.length - 1; i >= 0; i--) {
+    if (hitTest(objects[i], pt, tolerance)) return objects[i]
+  }
+  for (let i = objects.length - 1; i >= 0; i--) {
+    if (objects[i].type === 'pipe' && hitTest(objects[i], pt, pipeTolerance)) return objects[i]
+  }
+  return null
+}
+
 export function handlesOf(obj) {
   if (obj.type === 'pipe') {
     return [{ id: 'p1', x: obj.x1, y: obj.y1 }, { id: 'p2', x: obj.x2, y: obj.y2 }]
