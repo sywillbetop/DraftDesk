@@ -1,25 +1,84 @@
 <script setup>
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useDocument } from './composables/useDocument.js'
+import TopBar from './components/TopBar.vue'
+import ColorPalette from './components/ColorPalette.vue'
+import PhraseBar from './components/PhraseBar.vue'
+import SelectionBar from './components/SelectionBar.vue'
 import PageCanvas from './components/PageCanvas.vue'
+import PageNav from './components/PageNav.vue'
+import Toast from './components/Toast.vue'
 
 const doc = useDocument()
+const fileInput = ref(null)
+const toast = ref(null)
+let toastTimer = null
 
-async function onFile(e) {
-  const f = e.target.files[0]
-  if (f) await doc.openFile(f)
+function showToast(message, kind = 'ok') {
+  toast.value = { message, kind }
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => (toast.value = null), 5000)
 }
+
+async function openFile(file) {
+  try {
+    await doc.openFile(file)
+  } catch {
+    showToast('이 파일은 열 수 없습니다. PDF나 이미지 파일인지 확인해 주세요.', 'error')
+  }
+}
+
+function onPick(e) {
+  const f = e.target.files[0]
+  e.target.value = ''
+  if (f) openFile(f)
+}
+
+function onDrop(e) {
+  const f = e.dataTransfer?.files?.[0]
+  if (f) openFile(f)
+}
+
+const showColors = computed(() => ['rect', 'pipe', 'bend', 'text'].includes(doc.tool.value) || !!doc.selected.value)
+
+function onKey(e) {
+  if (e.key !== 'Delete' || !doc.selected.value) return
+  const tag = document.activeElement?.tagName
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return
+  doc.remove(doc.selected.value.id)
+}
+onMounted(() => window.addEventListener('keydown', onKey))
+onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 </script>
 
 <template>
-  <div style="display:flex;flex-direction:column;height:100vh">
-    <div>
-      <input id="tmp-file" type="file" @change="onFile" />
-      <button @click="doc.setTool('rect')">공조</button>
-      <button @click="doc.setTool('pipe')">배관</button>
-      <button @click="doc.setTool('bend')">꺾기</button>
-      <button @click="doc.setPage(doc.currentPage.value + 1)">다음</button>
-      <button @click="doc.zoomStep(1)">+</button>
+  <div class="app" @dragover.prevent @drop.prevent="onDrop">
+    <input ref="fileInput" type="file" accept=".pdf,image/*" hidden @change="onPick" />
+    <TopBar :doc="doc" @open="fileInput.click()" @save="showToast('저장은 다음 단계에서 연결됩니다.')" />
+    <Toast v-if="toast" :message="toast.message" :kind="toast.kind" @close="toast = null" />
+
+    <template v-if="doc.source.value">
+      <div v-if="showColors || doc.tool.value === 'text' || doc.selected.value" class="options">
+        <PhraseBar v-if="doc.tool.value === 'text'" :doc="doc"><ColorPalette :doc="doc" /></PhraseBar>
+        <ColorPalette v-else-if="showColors" :doc="doc" />
+        <SelectionBar :doc="doc" />
+      </div>
+      <PageCanvas :doc="doc" />
+      <PageNav :doc="doc" />
+    </template>
+    <div v-else class="empty">
+      <p>도면 파일을 열어 주세요</p>
+      <button @click="fileInput.click()">📂 도면 열기</button>
+      <p class="hint">PDF나 사진 파일을 이 화면에 끌어다 놓아도 됩니다.</p>
     </div>
-    <PageCanvas :doc="doc" />
   </div>
 </template>
+
+<style scoped>
+.app { display: flex; flex-direction: column; height: 100vh; }
+.options { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 8px 12px; background: #eef2ff; border-bottom: 2px solid #9ca3af; }
+.empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; font-size: 1.6rem; font-weight: bold; }
+.empty p { margin: 0; }
+.empty .hint { font-size: 1.1rem; font-weight: normal; color: #374151; }
+.empty button { min-height: 80px; padding: 0 48px; font-size: 1.6rem; font-weight: bold; border-radius: 12px; border: 0; background: #1d4ed8; color: #fff; }
+</style>
