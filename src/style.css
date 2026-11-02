@@ -1,0 +1,3 @@
+html { font-size: 20px; }
+body { margin: 0; font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; background: #f3f4f6; color: #111827; }
+button { min-height: 48px; font-size: 1rem; font-family: inherit; cursor: pointer; }
