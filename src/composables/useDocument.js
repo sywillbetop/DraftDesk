@@ -15,7 +15,7 @@ export function useDocument() {
   const selectedId = ref(null)
   const tool = ref('select')
   const color = ref(loadColor())
-  const pendingText = ref('')
+  const viewCenter = ref({ x: 100, y: 100, w: 0, h: 0 }) // 지금 화면에 보이는 도면의 가운데(pt)와 페이지 크기
   const changed = ref(false)
 
   const currentObjects = computed(() => objectsByPage.value[currentPage.value] || [])
@@ -99,7 +99,7 @@ export function useDocument() {
   }
 
   return {
-    source, currentPage, zoom, effectiveScale, objectsByPage, selectedId, tool, color, pendingText,
+    source, currentPage, zoom, effectiveScale, objectsByPage, selectedId, tool, color, viewCenter,
     currentObjects, modified, hasUnsaved, selected,
     setSource, openFile, setPage, setZoom, zoomStep, setTool, setColor, add, update, remove, select, markSaved,
   }

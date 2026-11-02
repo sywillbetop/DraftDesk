@@ -26,7 +26,7 @@ const showFormat = computed(() => options.value.formatChoiceFor.includes(scope.v
 const LABELS = computed(() => ({
   all: `전체 페이지(${source.value.pageCount}장)`,
   modified: `수정한 페이지만(${modified.value.length}장)`,
-  one: `지금 보는 페이지만(${page.value}장)`,
+  one: '지금 보는 페이지만(1장)',
 }))
 
 async function save() {
@@ -77,7 +77,7 @@ async function save() {
           <button data-format="png" class="choice" :class="{ on: format === 'png' }" :disabled="saving" @click="format = 'png'">이미지 (PNG)</button>
         </div>
         <p v-if="!options.pdf" class="note">이 PDF는 PDF로 저장할 수 없어 이미지로 저장됩니다. 장마다 따로 저장해 주세요.</p>
-        <p v-if="scope === 'one' && options.scopes.length > 1" class="note">지금 보는 {{ page }}장이 저장됩니다.</p>
+        <p v-if="scope === 'one' && options.scopes.length > 1" class="note">지금 보는 {{ page }}번째 페이지가 저장됩니다.</p>
       </template>
 
       <p v-if="saving" class="saving">저장 중입니다…</p>

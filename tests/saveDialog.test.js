@@ -42,7 +42,8 @@ test('지금 보는 페이지만을 고르면 PDF/이미지 형식과 안내가 
   await w.find('[data-scope="one"]').trigger('click')
   expect(w.find('[data-format="pdf"]').exists()).toBe(true)
   expect(w.find('[data-format="png"]').exists()).toBe(true)
-  expect(w.text()).toContain('지금 보는 3장이 저장됩니다')
+  expect(w.text()).toContain('지금 보는 페이지만(1장)')
+  expect(w.text()).toContain('3번째 페이지가 저장됩니다')
 })
 
 test('한 장짜리 이미지 도면은 범위 선택 없이 형식만 보여 준다', () => {

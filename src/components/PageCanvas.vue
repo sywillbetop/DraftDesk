@@ -3,7 +3,7 @@ import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { drawObject, drawSelection, HANDLE_PX } from '../lib/draw.js'
 import { distance, pinchScale } from '../lib/pinch.js'
 import {
-  makeRect, makePipe, makeText, hitHandle, pickObject, moveObject, resizeByHandle,
+  makeRect, makePipe, hitHandle, pickObject, moveObject, resizeByHandle,
 } from '../lib/geometry.js'
 
 const props = defineProps({ doc: { type: Object, required: true } })
@@ -103,6 +103,7 @@ function drawOverlay() {
 
 watch([props.doc.source, props.doc.currentPage], show)
 watch(scale, repaint)
+watch([scale, pageDims, ready], () => nextTick(updateCenter))
 watch(ready, drawOverlay)
 watch(
   [props.doc.currentObjects, props.doc.selectedId, props.doc.tool, draft],
@@ -113,10 +114,32 @@ watch(
 let ro
 onMounted(() => {
   show()
-  ro = new ResizeObserver(computeFit)
+  ro = new ResizeObserver(() => { computeFit(); updateCenter() })
   if (viewportEl.value) ro.observe(viewportEl.value)
 })
 onBeforeUnmount(() => ro && ro.disconnect())
+
+// 지금 보이는 부분의 가운데를 도면 좌표로 알려 둔다(글씨를 붙일 자리)
+function updateCenter() {
+  const v = viewportEl.value
+  const o = overlayEl.value
+  if (!v || !o || !pageDims.value.w) return
+  const vr = v.getBoundingClientRect()
+  const or = o.getBoundingClientRect()
+  const s = scale.value
+  const w = pageDims.value.w
+  const h = pageDims.value.h
+  const left = Math.max(vr.left, or.left)
+  const right = Math.min(vr.right, or.right)
+  const top = Math.max(vr.top, or.top)
+  const bottom = Math.min(vr.bottom, or.bottom)
+  props.doc.viewCenter.value = {
+    x: Math.max(0, Math.min(w, ((left + right) / 2 - or.left) / s)),
+    y: Math.max(0, Math.min(h, ((top + bottom) / 2 - or.top) / s)),
+    w,
+    h,
+  }
+}
 
 function toPt(e) {
   const r = overlayEl.value.getBoundingClientRect()
@@ -160,7 +183,6 @@ function onDown(e) {
     drag = { mode: 'draw', start: pt }
     draft.value = null
   } else if (tool === 'text') {
-    if (doc.pendingText.value) doc.add(makeText(pt, doc.pendingText.value, doc.color.value))
     return
   } else {
     const sel = doc.selected.value
@@ -239,7 +261,7 @@ function onWheel(e) {
 </script>
 
 <template>
-  <div ref="viewportEl" class="viewport" @wheel.prevent="onWheel">
+  <div ref="viewportEl" class="viewport" @wheel.prevent="onWheel" @scroll="updateCenter">
     <div class="stage" :style="stageStyle">
       <canvas v-show="ready" ref="baseEl" class="layer" />
       <canvas

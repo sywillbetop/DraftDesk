@@ -25,6 +25,15 @@ export function makeText(at, text, color, size = 24) {
   return { id: newId(), type: 'text', x: at.x, y: at.y, text, size, color }
 }
 
+// center 가 글씨 상자의 가운데가 되게 놓되, 페이지 밖으로 나가지 않게 한다
+export function makeTextAt(center, text, color, page) {
+  const t = makeText({ x: 0, y: 0 }, text, color)
+  const b = textBox(t)
+  t.x = Math.max(0, Math.min(page.w - b.w, center.x - b.w / 2))
+  t.y = Math.max(0, Math.min(page.h - b.h, center.y - b.h / 2))
+  return t
+}
+
 export function pipePoints(p) {
   const a = { x: p.x1, y: p.y1 }
   const b = { x: p.x2, y: p.y2 }

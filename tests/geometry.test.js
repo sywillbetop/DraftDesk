@@ -152,3 +152,16 @@ test('pickObject: 배관은 넓은 범위로 잡히지만 도형 안쪽 클릭�
   // 아무것도 없으면 null
   expect(pickObject([pipe], { x: 20, y: 300 }, 8, 40)).toBe(null)
 })
+
+import { makeTextAt, textBox } from '../src/lib/geometry.js'
+
+test('makeTextAt: 글씨 상자의 가운데가 지정한 점에 오고 페이지 안에 머문다', () => {
+  const t = makeTextAt({ x: 300, y: 200 }, '실내기', '#DC2626', { w: 1000, h: 800 })
+  const b = textBox(t)
+  expect(b.x + b.w / 2).toBeCloseTo(300)
+  expect(b.y + b.h / 2).toBeCloseTo(200)
+  const edge = makeTextAt({ x: -50, y: 5000 }, '실내기', '#DC2626', { w: 1000, h: 800 })
+  const e = textBox(edge)
+  expect(e.x).toBeGreaterThanOrEqual(0)
+  expect(e.y + e.h).toBeLessThanOrEqual(800)
+})

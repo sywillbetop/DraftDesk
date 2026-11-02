@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useDocument } from './composables/useDocument.js'
+import { makeTextAt } from './lib/geometry.js'
 import TopBar from './components/TopBar.vue'
 import ColorPalette from './components/ColorPalette.vue'
 import PhraseBar from './components/PhraseBar.vue'
@@ -77,6 +78,11 @@ watch(doc.hasUnsaved, (unsaved) => {
   else window.removeEventListener('beforeunload', warnBeforeLeave)
 })
 
+function placeText(text) {
+  const c = doc.viewCenter.value
+  doc.add(makeTextAt(c, text, doc.color.value, { w: c.w || 1e6, h: c.h || 1e6 }))
+}
+
 const showColors = computed(() => ['rect', 'pipe', 'bend', 'text'].includes(doc.tool.value) || !!doc.selected.value)
 
 function onKey(e) {
@@ -108,10 +114,15 @@ onBeforeUnmount(() => {
     <Toast v-if="toast" :message="toast.message" :kind="toast.kind" @close="toast = null" />
 
     <template v-if="doc.source.value">
-      <div v-if="showColors || doc.tool.value === 'text' || doc.selected.value" class="options">
-        <PhraseBar v-if="doc.tool.value === 'text'" :doc="doc"><ColorPalette :doc="doc" /></PhraseBar>
-        <ColorPalette v-else-if="showColors" :doc="doc" />
-        <SelectionBar :doc="doc" />
+      <!-- 옵션 줄은 항상 같은 높이로 자리를 잡아 두어, 도형을 누를 때 도면이 밀리지 않게 한다 -->
+      <div class="optwrap">
+        <div class="options">
+          <ColorPalette class="palette" :class="{ hidden: !showColors }" :doc="doc" />
+          <div class="selslot"><SelectionBar :doc="doc" /></div>
+        </div>
+        <div v-if="doc.tool.value === 'text'" class="phrasepanel">
+          <PhraseBar :doc="doc" @place="placeText" />
+        </div>
       </div>
       <PageCanvas :doc="doc" />
       <PageNav :doc="doc" />
@@ -126,7 +137,17 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
-.options { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 8px 12px; background: #eef2ff; border-bottom: 2px solid #9ca3af; }
+.optwrap { position: relative; z-index: 10; }
+.options { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; padding: 8px 12px; min-height: 72px; box-sizing: border-box; background: #eef2ff; border-bottom: 2px solid #9ca3af; }
+.palette.hidden { visibility: hidden; }
+.selslot { min-height: 52px; display: flex; align-items: center; }
+.phrasepanel { position: absolute; top: 100%; left: 0; right: 0; max-height: 60vh; overflow-y: auto; padding: 10px 12px; background: #eef2ff; border-bottom: 3px solid #1d4ed8; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); }
+@media (max-width: 700px) {
+  .options { min-height: 116px; gap: 6px 12px; }
+  .options :deep(.swatch) { width: 38px; height: 38px; min-height: 38px; }
+  .options :deep(.palette) { gap: 6px; }
+  .options :deep(.label) { display: none; }
+}
 .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; font-size: 1.6rem; font-weight: bold; }
 .empty p { margin: 0; }
 .empty .hint { font-size: 1.1rem; font-weight: normal; color: #374151; }
