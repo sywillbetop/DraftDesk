@@ -13,11 +13,12 @@ const options = computed(() =>
     pageCount: source.value.pageCount,
     isImage: source.value.kind === 'image',
     modified: modified.value,
+    canSavePdf: source.value.canSavePdf !== false,
   }),
 )
 
 const scope = ref(options.value.scopes[0])
-const format = ref('pdf')
+const format = ref(options.value.pdf ? 'pdf' : 'png')
 const saving = ref(false)
 
 const page = computed(() => props.doc.currentPage.value + 1)
@@ -31,7 +32,7 @@ const LABELS = computed(() => ({
 async function save() {
   saving.value = true
   try {
-    const { filename } = await runSave({
+    const { filename, pages } = await runSave({
       source: source.value,
       objectsByPage: props.doc.objectsByPage.value,
       scope: scope.value,
@@ -39,7 +40,7 @@ async function save() {
       currentPage: props.doc.currentPage.value,
       modified: modified.value,
     })
-    emit('done', filename)
+    emit('done', filename, pages)
   } catch {
     emit('error')
   } finally {
@@ -72,9 +73,10 @@ async function save() {
       <template v-if="showFormat">
         <p class="q">어떤 파일로 저장할까요?</p>
         <div class="choices">
-          <button data-format="pdf" class="choice" :class="{ on: format === 'pdf' }" :disabled="saving" @click="format = 'pdf'">PDF 파일</button>
+          <button v-if="options.pdf" data-format="pdf" class="choice" :class="{ on: format === 'pdf' }" :disabled="saving" @click="format = 'pdf'">PDF 파일</button>
           <button data-format="png" class="choice" :class="{ on: format === 'png' }" :disabled="saving" @click="format = 'png'">이미지 (PNG)</button>
         </div>
+        <p v-if="!options.pdf" class="note">이 PDF는 PDF로 저장할 수 없어 이미지로 저장됩니다. 장마다 따로 저장해 주세요.</p>
         <p v-if="scope === 'one' && options.scopes.length > 1" class="note">지금 보는 {{ page }}장이 저장됩니다.</p>
       </template>
 

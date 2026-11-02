@@ -102,3 +102,14 @@ test('새 도면을 열면 도형과 선택이 초기화된다', () => {
   expect(doc.currentPage.value).toBe(0)
   expect(doc.selectedId.value).toBeNull()
 })
+
+test('일부 페이지만 저장하면 저장 안 한 작업 경고가 남는다', () => {
+  const doc = opened()
+  doc.add(rect())
+  doc.setPage(2)
+  doc.add(rect())
+  doc.markSaved([2])
+  expect(doc.hasUnsaved.value).toBe(true)
+  doc.markSaved([0, 2])
+  expect(doc.hasUnsaved.value).toBe(false)
+})

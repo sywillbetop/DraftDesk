@@ -129,3 +129,13 @@ test.each([0, 90, 180, 270])('viewToPdf: 회전 %i도에서 보이는 네 모서
     expect(p.y).toBeLessThanOrEqual(100)
   }
 })
+
+test('viewToPdf: CropBox 원점이 있으면 그만큼 더해진다', () => {
+  const pg = { w: 200, h: 100, x: 36, y: 20, rotation: 0 }
+  expect(viewToPdf({ x: 10, y: 20 }, pg)).toEqual({ x: 46, y: 100 })
+})
+
+test('viewToPdf: 90도 + CropBox 원점', () => {
+  const pg = { w: 200, h: 100, x: 36, y: 20, rotation: 90 }
+  expect(viewToPdf({ x: 100, y: 0 }, pg)).toEqual({ x: 36, y: 120 })
+})

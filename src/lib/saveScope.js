@@ -5,10 +5,11 @@ export function modifiedPages(objectsByPage) {
     .sort((a, b) => a - b)
 }
 
-export function saveOptions({ pageCount, isImage, modified }) {
-  const single = isImage || pageCount <= 1
+export function saveOptions({ pageCount, isImage, modified, canSavePdf = true }) {
+  const single = isImage || pageCount <= 1 || !canSavePdf
   return {
     scopes: single ? ['one'] : ['all', 'modified', 'one'],
+    pdf: canSavePdf,
     disabled: !single && modified.length === 0 ? ['modified'] : [],
     formatChoiceFor: ['one'],
   }

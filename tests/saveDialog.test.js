@@ -50,3 +50,12 @@ test('한 장짜리 이미지 도면은 범위 선택 없이 형식만 보여 �
   expect(w.find('[data-scope="all"]').exists()).toBe(false)
   expect(w.find('[data-format="png"]').exists()).toBe(true)
 })
+
+test('PDF로 저장할 수 없는 도면은 이미지 저장만 보여 주고 이유를 알린다', () => {
+  const doc = makeDoc({ modified: [1] })
+  doc.source.value.canSavePdf = false
+  const w = mount(SaveDialog, { props: { doc } })
+  expect(w.find('[data-format="pdf"]').exists()).toBe(false)
+  expect(w.find('[data-format="png"]').exists()).toBe(true)
+  expect(w.text()).toContain('이 PDF는 PDF로 저장할 수 없어')
+})

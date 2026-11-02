@@ -32,9 +32,9 @@ async function openFile(file) {
 
 const saving = ref(false)
 
-function onSaved(filename) {
+function onSaved(filename, pages) {
   saving.value = false
-  doc.markSaved()
+  doc.markSaved(pages)
   showToast(`저장했습니다: ${filename}  (다운로드 폴더에 들어갑니다. 같은 이름이 있으면 (1)이 붙을 수 있습니다)`)
 }
 

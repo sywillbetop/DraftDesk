@@ -1,3 +1,5 @@
+import { PDFDocument } from 'pdf-lib'
+
 const OPEN_FAILED = 'OPEN_FAILED'
 
 function isPdf(file) {
@@ -9,13 +11,33 @@ async function openPdf(file) {
   const pdfjs = await import('pdfjs-dist')
   const worker = await import('pdfjs-dist/build/pdf.worker.min.mjs?url')
   pdfjs.GlobalWorkerOptions.workerSrc = worker.default
+  // 워커 안에서도 같은 주소로 읽도록 절대 주소로 만든다
+  const assets = new URL(`${import.meta.env.BASE_URL}pdfjs/`, document.baseURI).href
   // pdfjs 는 넘겨준 버퍼를 워커로 넘겨 버리므로 복사본을 준다
-  const pdf = await pdfjs.getDocument({ data: bytes.slice() }).promise
+  const pdf = await pdfjs.getDocument({
+    data: bytes.slice(),
+    cMapUrl: `${assets}cmaps/`,
+    cMapPacked: true,
+    standardFontDataUrl: `${assets}standard_fonts/`,
+  }).promise
+  // 화면에는 보여도 pdf-lib 가 읽지 못하는 PDF(예: 인쇄 제한 암호)는 PDF 저장을 막는다
+  let canSavePdf = true
+  try {
+    await PDFDocument.load(bytes)
+  } catch {
+    canSavePdf = false
+  }
   return {
     kind: 'pdf',
     name: file.name,
     pageCount: pdf.numPages,
     bytes,
+    canSavePdf,
+    async pageSize(index) {
+      const page = await pdf.getPage(index + 1)
+      const v = page.getViewport({ scale: 1 })
+      return { w: v.width, h: v.height }
+    },
     async renderPage(index, scale) {
       const page = await pdf.getPage(index + 1)
       const viewport = page.getViewport({ scale })
@@ -49,6 +71,10 @@ async function openImage(file) {
     mime: file.type,
     pageCount: 1,
     bytes,
+    canSavePdf: true,
+    async pageSize() {
+      return { w: img.naturalWidth, h: img.naturalHeight }
+    },
     async renderPage(_index, scale) {
       const canvas = document.createElement('canvas')
       canvas.width = Math.ceil(img.naturalWidth * scale)

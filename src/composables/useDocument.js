@@ -93,8 +93,9 @@ export function useDocument() {
     selectedId.value = id
   }
 
-  function markSaved() {
-    changed.value = false
+  // 저장한 페이지가 수정한 페이지를 모두 포함할 때만 "저장 안 한 작업 없음"으로 본다
+  function markSaved(savedPages) {
+    if (!savedPages || modified.value.every((p) => savedPages.includes(p))) changed.value = false
   }
 
   return {

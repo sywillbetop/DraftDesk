@@ -1,5 +1,5 @@
 import { test, expect, vi } from 'vitest'
-import { PDFDocument, degrees } from 'pdf-lib'
+import { PDFDocument, degrees, setLineWidth } from 'pdf-lib'
 import { exportPdf, runSave } from '../src/lib/exportDoc.js'
 import { makeRect, makePipe, makeText } from '../src/lib/geometry.js'
 
@@ -138,4 +138,21 @@ test('회전 90도 페이지의 공조 꼭짓점이 PDF 좌표로 변환된다',
   expect(text).toMatch(/50 -50 m/)
   // 화면 (150,50) -> PDF (50,150)
   expect(text).toMatch(/50 -150 l/)
+})
+
+test('저장하면 저장한 페이지 번호도 돌려준다', async () => {
+  const deps = fakeDeps()
+  const source = await pdfSource()
+  const r = await runSave({ source, objectsByPage: {}, scope: 'modified', format: 'pdf', currentPage: 0, modified: [0, 2] }, deps)
+  expect(r.pages).toEqual([0, 2])
+})
+
+test('원본 내용을 q/Q로 감싸 원본이 남긴 선 굵기가 새 도형에 새지 않는다', async () => {
+  const d = await PDFDocument.create()
+  const p = d.addPage([600, 800])
+  p.pushOperators(setLineWidth(9)) // 닫지 않은 상태 변경을 남기는 원본
+  const source = { kind: 'pdf', name: 'a.pdf', pageCount: 1, bytes: new Uint8Array(await d.save()) }
+  const bytes = await exportPdf({ source, objectsByPage: { 0: [rect()] }, pages: [0] })
+  const text = await contentOf(bytes, 0)
+  expect(text).toMatch(/9 w\s+Q(\s+Q)?\s+q/)
 })

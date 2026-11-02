@@ -33,9 +33,9 @@ export async function renderTextPng(obj) {
 }
 
 async function drawObjects(doc, page, objects, renderText) {
-  const { width, height } = page.getSize()
   const rotation = ((page.getRotation().angle % 360) + 360) % 360
-  const info = { w: width, h: height, rotation }
+  const box = page.getCropBox()
+  const info = { w: box.width, h: box.height, x: box.x, y: box.y, rotation }
   const toPdf = (p) => viewToPdf(p, info)
   const line = (a, b, thickness, color) =>
     page.drawLine({ start: toPdf(a), end: toPdf(b), thickness, color, lineCap: LineCapStyle.Round })
@@ -62,11 +62,11 @@ async function drawObjects(doc, page, objects, renderText) {
 
 async function imageForPdf(source) {
   if (source.mime === 'image/png') return { png: true, bytes: source.bytes }
-  if (source.mime === 'image/jpeg') return { png: false, bytes: source.bytes }
-  // 그 밖의 형식(webp, gif)은 canvas 를 거쳐 PNG 로 바꾼다
+  // JPEG 는 사진의 회전 정보(EXIF)가 화면과 어긋나지 않도록, webp·gif 는 형식을 맞추려고 canvas 를 거친다
   const r = await source.renderPage(0, 1)
-  const blob = await new Promise((resolve) => r.canvas.toBlob(resolve, 'image/png'))
-  return { png: true, bytes: new Uint8Array(await blob.arrayBuffer()) }
+  const jpeg = source.mime === 'image/jpeg'
+  const blob = await new Promise((resolve) => r.canvas.toBlob(resolve, jpeg ? 'image/jpeg' : 'image/png', 0.92))
+  return { png: !jpeg, bytes: new Uint8Array(await blob.arrayBuffer()) }
 }
 
 export async function exportPdf({ source, objectsByPage, pages, renderText = renderTextPng }) {
@@ -74,7 +74,11 @@ export async function exportPdf({ source, objectsByPage, pages, renderText = ren
   let doc
   if (source.kind === 'pdf') {
     doc = await PDFDocument.load(source.bytes)
-    for (const i of keep) await drawObjects(doc, doc.getPage(i), objectsByPage[i] || [], renderText)
+    for (const i of keep) {
+      const page = doc.getPage(i)
+      const objects = objectsByPage[i] || []
+      await drawObjects(doc, page, objects, renderText)
+    }
     for (let i = doc.getPageCount() - 1; i >= 0; i--) {
       if (!keep.includes(i)) doc.removePage(i)
     }
@@ -130,5 +134,5 @@ export async function runSave(
     filename = editedName(source.name, 'pdf', numbered)
   }
   deps.download(blob, filename)
-  return { filename }
+  return { filename, pages }
 }

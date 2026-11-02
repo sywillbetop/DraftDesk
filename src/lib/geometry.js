@@ -127,11 +127,15 @@ export function viewSize(page) {
     : { w: page.w, h: page.h }
 }
 
-// page.w/h 는 회전 전 PDF 크기, 입력은 화면에 보이는 좌표
+// page.w/h 는 회전 전 PDF 크기(보이는 영역), page.x/y 는 그 영역의 원점(CropBox), 입력은 화면에 보이는 좌표
 export function viewToPdf(pt, page) {
   const { w, h, rotation } = page
-  if (rotation === 90) return { x: pt.y, y: pt.x }
-  if (rotation === 180) return { x: w - pt.x, y: pt.y }
-  if (rotation === 270) return { x: w - pt.y, y: h - pt.x }
-  return { x: pt.x, y: h - pt.y }
+  const ox = page.x || 0
+  const oy = page.y || 0
+  let p
+  if (rotation === 90) p = { x: pt.y, y: pt.x }
+  else if (rotation === 180) p = { x: w - pt.x, y: pt.y }
+  else if (rotation === 270) p = { x: w - pt.y, y: h - pt.x }
+  else p = { x: pt.x, y: h - pt.y }
+  return { x: p.x + ox, y: p.y + oy }
 }

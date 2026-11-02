@@ -30,3 +30,13 @@ test('형식은 한 장 범위일 때만 고른다', () => {
   const o = saveOptions({ pageCount: 12, isImage: false, modified: [1] })
   expect(o.formatChoiceFor).toEqual(['one'])
 })
+
+test('PDF로 저장할 수 없는 PDF는 한 장 이미지 저장만 남는다', () => {
+  const o = saveOptions({ pageCount: 12, isImage: false, modified: [1], canSavePdf: false })
+  expect(o.scopes).toEqual(['one'])
+  expect(o.pdf).toBe(false)
+})
+
+test('보통은 PDF 저장이 가능하다', () => {
+  expect(saveOptions({ pageCount: 3, isImage: false, modified: [] }).pdf).toBe(true)
+})
