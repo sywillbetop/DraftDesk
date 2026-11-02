@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useDocument } from './composables/useDocument.js'
 import TopBar from './components/TopBar.vue'
 import ColorPalette from './components/ColorPalette.vue'
@@ -9,6 +9,7 @@ import PageCanvas from './components/PageCanvas.vue'
 import PageNav from './components/PageNav.vue'
 import Toast from './components/Toast.vue'
 import SaveDialog from './components/SaveDialog.vue'
+import ConfirmDialog from './components/ConfirmDialog.vue'
 
 const doc = useDocument()
 const fileInput = ref(null)
@@ -42,16 +43,39 @@ function onSaveError() {
   showToast('저장하지 못했습니다. 다시 시도해 주세요.', 'error')
 }
 
+const pendingFile = ref(null)
+
+// 열기 경로(버튼·끌어다 놓기)는 모두 여기를 지나 저장 안 한 작업을 확인한다
+function requestOpen(file) {
+  if (doc.hasUnsaved.value) pendingFile.value = file
+  else openFile(file)
+}
+
+function confirmOpen() {
+  const f = pendingFile.value
+  pendingFile.value = null
+  openFile(f)
+}
+
 function onPick(e) {
   const f = e.target.files[0]
   e.target.value = ''
-  if (f) openFile(f)
+  if (f) requestOpen(f)
 }
 
 function onDrop(e) {
   const f = e.dataTransfer?.files?.[0]
-  if (f) openFile(f)
+  if (f) requestOpen(f)
 }
+
+function warnBeforeLeave(e) {
+  e.preventDefault()
+  e.returnValue = ''
+}
+watch(doc.hasUnsaved, (unsaved) => {
+  if (unsaved) window.addEventListener('beforeunload', warnBeforeLeave)
+  else window.removeEventListener('beforeunload', warnBeforeLeave)
+})
 
 const showColors = computed(() => ['rect', 'pipe', 'bend', 'text'].includes(doc.tool.value) || !!doc.selected.value)
 
@@ -62,7 +86,10 @@ function onKey(e) {
   doc.remove(doc.selected.value.id)
 }
 onMounted(() => window.addEventListener('keydown', onKey))
-onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onKey)
+  window.removeEventListener('beforeunload', warnBeforeLeave)
+})
 </script>
 
 <template>
@@ -70,6 +97,14 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
     <input ref="fileInput" type="file" accept=".pdf,image/*" hidden @change="onPick" />
     <TopBar :doc="doc" @open="fileInput.click()" @save="saving = true" />
     <SaveDialog v-if="saving" :doc="doc" @cancel="saving = false" @done="onSaved" @error="onSaveError" />
+    <ConfirmDialog
+      v-if="pendingFile"
+      message="저장하지 않은 작업이 있습니다. 그래도 새로 열까요?"
+      ok-label="네, 새로 열기"
+      cancel-label="아니요"
+      @ok="confirmOpen"
+      @cancel="pendingFile = null"
+    />
     <Toast v-if="toast" :message="toast.message" :kind="toast.kind" @close="toast = null" />
 
     <template v-if="doc.source.value">
