@@ -66,10 +66,8 @@ export function useDocument() {
     const page = currentPage.value
     objectsByPage.value = { ...objectsByPage.value, [page]: [...(objectsByPage.value[page] || []), obj] }
     changed.value = true
-    if (obj.type !== 'text') {
-      tool.value = 'select'
-      selectedId.value = obj.id
-    }
+    tool.value = 'select'
+    selectedId.value = obj.id
   }
 
   function update(id, fn) {

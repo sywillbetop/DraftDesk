@@ -8,6 +8,8 @@ export const HANDLE_PX = 16
 export function drawObject(ctx, obj, scale) {
   ctx.save()
   if (obj.type === 'rect') {
+    ctx.fillStyle = obj.color
+    ctx.fillRect(obj.x * scale, obj.y * scale, obj.w * scale, obj.h * scale)
     ctx.strokeStyle = obj.color
     ctx.lineWidth = RECT_STROKE * scale
     ctx.strokeRect(obj.x * scale, obj.y * scale, obj.w * scale, obj.h * scale)

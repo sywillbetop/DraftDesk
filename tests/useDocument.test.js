@@ -44,11 +44,14 @@ test('도형을 하나 놓으면 도구가 선택으로 돌아가고 그 도형�
   expect(doc.selectedId.value).toBe(r.id)
 })
 
-test('글씨 도구는 글씨를 놓아도 유지된다', () => {
+test('글씨를 놓으면 도구가 선택으로 돌아가고 그 글씨가 선택된다', () => {
   const doc = opened()
   doc.setTool('text')
-  doc.add(makeText({ x: 1, y: 1 }, '덕트', '#DC2626'))
-  expect(doc.tool.value).toBe('text')
+  const t = makeText({ x: 1, y: 1 }, '덕트', '#DC2626')
+  doc.add(t)
+  expect(doc.tool.value).toBe('select')
+  expect(doc.selectedId.value).toBe(t.id)
+  expect(doc.selected.value.text).toBe('덕트')
 })
 
 test('확대는 25%~400%로 제한된다', () => {

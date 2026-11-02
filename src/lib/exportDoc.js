@@ -44,7 +44,10 @@ async function drawObjects(doc, page, objects, renderText) {
     const color = hexToRgb(o.color)
     if (o.type === 'rect') {
       const c = [{ x: o.x, y: o.y }, { x: o.x + o.w, y: o.y }, { x: o.x + o.w, y: o.y + o.h }, { x: o.x, y: o.y + o.h }]
-      for (let i = 0; i < 4; i++) line(c[i], c[(i + 1) % 4], RECT_STROKE, color)
+      // 안을 색으로 채운 네모. drawSvgPath 는 y 를 뒤집어 쓰므로 PDF 좌표의 y 에 부호를 바꿔 넣는다
+      const p = c.map(toPdf)
+      const d = `M ${p[0].x} ${-p[0].y} L ${p[1].x} ${-p[1].y} L ${p[2].x} ${-p[2].y} L ${p[3].x} ${-p[3].y} Z`
+      page.drawSvgPath(d, { x: 0, y: 0, color, borderColor: color, borderWidth: RECT_STROKE, borderLineCap: LineCapStyle.Round })
     } else if (o.type === 'pipe') {
       const pts = pipePoints(o)
       for (let i = 0; i < pts.length - 1; i++) line(pts[i], pts[i + 1], PIPE_WIDTH, color)

@@ -111,3 +111,31 @@ test('이미지 도면을 저장하면 장 번호 없이 이름이 붙는다', a
   const r = await runSave({ source, objectsByPage: {}, scope: 'one', format: 'png', currentPage: 0, modified: [] }, deps)
   expect(r.filename).toBe('현장_편집.png')
 })
+
+import { PDFName, PDFRawStream, PDFArray, decodePDFRawStream } from 'pdf-lib'
+
+async function contentOf(bytes, pageIndex) {
+  const doc = await PDFDocument.load(bytes)
+  let contents = doc.getPage(pageIndex).node.Contents()
+  const streams = contents instanceof PDFArray ? contents.asArray().map((r) => doc.context.lookup(r)) : [contents]
+  return streams
+    .filter((s) => s instanceof PDFRawStream)
+    .map((s) => new TextDecoder('latin1').decode(decodePDFRawStream(s).decode()))
+    .join('\n')
+}
+
+test('공조는 안을 채운 네모로 저장되고 꼭짓점이 PDF 좌표로 변환된다', async () => {
+  const bytes = await exportPdf({ source: await pdfSource(), objectsByPage: { 0: [rect()] }, pages: [0] })
+  const text = await contentOf(bytes, 0)
+  expect(text).toMatch(/50 -750 m/)
+  expect(text).toMatch(/\bf\b|\bB\b|\bb\b/)
+})
+
+test('회전 90도 페이지의 공조 꼭짓점이 PDF 좌표로 변환된다', async () => {
+  const bytes = await exportPdf({ source: await pdfSource(), objectsByPage: { 1: [rect()] }, pages: [1] })
+  const text = await contentOf(bytes, 0)
+  // 회전 90: 화면 (50,50) -> PDF (50,50). drawSvgPath 가 y 를 뒤집어 쓰므로 스트림에는 -y 로 적힌다
+  expect(text).toMatch(/50 -50 m/)
+  // 화면 (150,50) -> PDF (50,150)
+  expect(text).toMatch(/50 -150 l/)
+})
