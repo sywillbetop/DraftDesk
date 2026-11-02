@@ -143,8 +143,9 @@ onBeforeUnmount(() => {
 .selslot { min-height: 52px; display: flex; align-items: center; }
 .phrasepanel { position: absolute; top: 100%; left: 0; right: 0; max-height: 60vh; overflow-y: auto; padding: 10px 12px; background: #eef2ff; border-bottom: 3px solid #1d4ed8; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); }
 @media (max-width: 700px) {
-  .options { min-height: 116px; gap: 6px 12px; }
-  .options :deep(.swatch) { width: 38px; height: 38px; min-height: 38px; }
+  .options { min-height: 92px; gap: 4px 10px; padding: 6px 8px; }
+  .selslot { min-height: 40px; }
+  .options :deep(.swatch) { width: 30px; height: 30px; min-height: 30px; border-width: 2px; }
   .options :deep(.palette) { gap: 6px; }
   .options :deep(.label) { display: none; }
 }

@@ -26,4 +26,8 @@ function resize(delta) {
 .selbar { display: flex; gap: 8px; }
 button { min-height: 52px; padding: 0 18px; font-size: 1.1rem; font-weight: bold; border-radius: 8px; border: 3px solid #1d4ed8; background: #fff; color: #1e3a8a; }
 button.del { border-color: #b91c1c; background: #b91c1c; color: #fff; }
+@media (max-width: 700px) {
+  .selbar { gap: 6px; }
+  button { min-height: 40px; padding: 0 10px; font-size: 0.9rem; border-width: 2px; }
+}
 </style>

@@ -29,7 +29,10 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 @media (max-width: 700px) {
   .nav { flex-wrap: wrap; gap: 6px; }
   .gap { flex-basis: 100%; width: auto; height: 0; }
-  button { padding: 0 10px; font-size: 1rem; }
-  .count { min-width: 70px; }
+  .nav { flex-wrap: nowrap; gap: 4px; padding: 6px 4px; }
+  .gap { display: none; }
+  button { min-height: 40px; padding: 0 8px; font-size: 0.85rem; border-width: 2px; white-space: nowrap; }
+  .count { min-width: 44px; font-size: 1rem; }
+  .zoom { min-width: 40px; font-size: 0.9rem; }
 }
 </style>
