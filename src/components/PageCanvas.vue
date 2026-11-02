@@ -98,7 +98,7 @@ function drawOverlay() {
   for (const o of props.doc.currentObjects.value) drawObject(ctx, o, s)
   if (draft.value) drawObject(ctx, draft.value, s)
   const sel = props.doc.selected.value
-  if (sel && props.doc.tool.value === 'select') drawSelection(ctx, sel, s)
+  if (sel && props.doc.tool.value === 'select') drawSelection(ctx, sel, s, handlePx * dpr)
 }
 
 watch([props.doc.source, props.doc.currentPage], show)
@@ -135,7 +135,7 @@ const pointers = new Map()
 let pinch = null
 const coarse = window.matchMedia?.('(pointer: coarse)').matches
 const handlePx = coarse ? 28 : HANDLE_PX
-const hitPx = coarse ? 18 : 8
+const hitPx = coarse ? 24 : 8
 
 function startPinch() {
   const [a, b] = [...pointers.values()]
@@ -173,6 +173,7 @@ function onDown(e) {
         if (hitTest(objs[i], pt, hitPx / scale.value)) { hit = objs[i]; break }
       }
       if (hit) {
+        if (doc.selectedId.value !== hit.id) navigator.vibrate?.(15) // 잡았다는 느낌
         doc.select(hit.id)
         drag = { mode: 'move', id: hit.id, orig: hit, start: pt }
       } else {

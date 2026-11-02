@@ -1,6 +1,6 @@
 import { PDFDocument, rgb, degrees, LineCapStyle } from 'pdf-lib'
 import { PIPE_WIDTH, pipePoints, viewToPdf } from './geometry.js'
-import { RECT_STROKE, TEXT_FONT, drawObject } from './draw.js'
+import { RECT_STROKE, TEXT_FONT, TEXT_PAD_RATIO, drawObject } from './draw.js'
 import { editedName } from './fileName.js'
 
 const TEXT_RATIO = 3
@@ -19,17 +19,20 @@ export async function renderTextPng(obj) {
   const ctx = c.getContext('2d')
   const font = `${obj.size * TEXT_RATIO}px ${TEXT_FONT}`
   ctx.font = font
-  const w = Math.max(1, Math.ceil(ctx.measureText(obj.text).width))
-  const h = Math.ceil(obj.size * 1.2 * TEXT_RATIO)
+  const pad = Math.ceil(obj.size * TEXT_PAD_RATIO * TEXT_RATIO)
+  const w = Math.max(1, Math.ceil(ctx.measureText(obj.text).width)) + pad * 2
+  const h = Math.ceil(obj.size * 1.2 * TEXT_RATIO) + pad * 2
   c.width = w
   c.height = h
   const g = c.getContext('2d')
   g.font = font
+  g.fillStyle = '#ffffff'
+  g.fillRect(0, 0, w, h)
   g.fillStyle = obj.color
   g.textBaseline = 'top'
-  g.fillText(obj.text, 0, 0)
+  g.fillText(obj.text, pad, pad)
   const blob = await new Promise((resolve) => c.toBlob(resolve, 'image/png'))
-  return { bytes: new Uint8Array(await blob.arrayBuffer()), wPt: w / TEXT_RATIO, hPt: h / TEXT_RATIO }
+  return { bytes: new Uint8Array(await blob.arrayBuffer()), wPt: w / TEXT_RATIO, hPt: h / TEXT_RATIO, pad: pad / TEXT_RATIO }
 }
 
 async function drawObjects(doc, page, objects, renderText) {
@@ -54,7 +57,8 @@ async function drawObjects(doc, page, objects, renderText) {
     } else {
       const t = await renderText(o)
       const img = await doc.embedPng(t.bytes)
-      const at = toPdf({ x: o.x, y: o.y + t.hPt }) // 그림의 왼쪽 아래 모서리
+      const pad = t.pad || 0
+      const at = toPdf({ x: o.x - pad, y: o.y - pad + t.hPt }) // 그림의 왼쪽 아래 모서리
       page.drawImage(img, { x: at.x, y: at.y, width: t.wPt, height: t.hPt, rotate: degrees(rotation) })
     }
   }
