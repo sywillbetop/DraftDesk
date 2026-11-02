@@ -8,6 +8,7 @@ import SelectionBar from './components/SelectionBar.vue'
 import PageCanvas from './components/PageCanvas.vue'
 import PageNav from './components/PageNav.vue'
 import Toast from './components/Toast.vue'
+import SaveDialog from './components/SaveDialog.vue'
 
 const doc = useDocument()
 const fileInput = ref(null)
@@ -26,6 +27,19 @@ async function openFile(file) {
   } catch {
     showToast('이 파일은 열 수 없습니다. PDF나 이미지 파일인지 확인해 주세요.', 'error')
   }
+}
+
+const saving = ref(false)
+
+function onSaved(filename) {
+  saving.value = false
+  doc.markSaved()
+  showToast(`저장했습니다: ${filename}  (다운로드 폴더에 들어갑니다. 같은 이름이 있으면 (1)이 붙을 수 있습니다)`)
+}
+
+function onSaveError() {
+  saving.value = false
+  showToast('저장하지 못했습니다. 다시 시도해 주세요.', 'error')
 }
 
 function onPick(e) {
@@ -54,7 +68,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 <template>
   <div class="app" @dragover.prevent @drop.prevent="onDrop">
     <input ref="fileInput" type="file" accept=".pdf,image/*" hidden @change="onPick" />
-    <TopBar :doc="doc" @open="fileInput.click()" @save="showToast('저장은 다음 단계에서 연결됩니다.')" />
+    <TopBar :doc="doc" @open="fileInput.click()" @save="saving = true" />
+    <SaveDialog v-if="saving" :doc="doc" @cancel="saving = false" @done="onSaved" @error="onSaveError" />
     <Toast v-if="toast" :message="toast.message" :kind="toast.kind" @close="toast = null" />
 
     <template v-if="doc.source.value">
