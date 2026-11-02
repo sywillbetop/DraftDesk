@@ -1,9 +1,10 @@
 export const DEFAULT_PHRASES = [
-  '덕트', '2웨이', '4웨이', '환기구', '급기', '배기', '에어컨', '실외기',
-  '냉매관', '배수관', '드레인', '보온', '상향', '하향', '천장', '벽체',
+  '실내기', '실외기', '배관', '냉매관', '단배관', '다배관', '1way', '2way', '4way',
+  '마력', '인버터', '개별 공조', '덕트',
 ]
 
-const KEY = 'draftdesk.phrases'
+// 기본 목록을 바꿀 때 올려서, 예전에 저장된 목록 대신 새 목록이 보이게 한다
+const KEY = 'draftdesk.phrases.v2'
 
 export function loadPhrases() {
   try {
