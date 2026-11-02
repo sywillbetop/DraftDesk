@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { drawObject, drawSelection, HANDLE_PX } from '../lib/draw.js'
+import { distance, pinchScale } from '../lib/pinch.js'
 import {
   makeRect, makePipe, makeText, hitTest, hitHandle, moveObject, resizeByHandle,
 } from '../lib/geometry.js'
@@ -130,8 +131,27 @@ function previewOf(tool, a, b) {
   return { type: 'pipe', x1: a.x, y1: a.y, x2: b.x, y2: b.y, bend: tool === 'bend', flip: false, color }
 }
 
+const pointers = new Map()
+let pinch = null
+const coarse = window.matchMedia?.('(pointer: coarse)').matches
+const handlePx = coarse ? 28 : HANDLE_PX
+const hitPx = coarse ? 18 : 8
+
+function startPinch() {
+  const [a, b] = [...pointers.values()]
+  pinch = { dist: distance(a, b), scale: scale.value }
+  drag = null
+  draft.value = null
+}
+
 function onDown(e) {
   if (!ready.value || e.button !== 0) return
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+  if (pointers.size === 2) {
+    startPinch()
+    return
+  }
+  if (pointers.size > 2) return
   const doc = props.doc
   const pt = toPt(e)
   const tool = doc.tool.value
@@ -143,14 +163,14 @@ function onDown(e) {
     return
   } else {
     const sel = doc.selected.value
-    const handle = sel && hitHandle(sel, pt, HANDLE_PX / scale.value)
+    const handle = sel && hitHandle(sel, pt, handlePx / scale.value)
     if (handle) {
       drag = { mode: 'handle', id: sel.id, handle, orig: sel }
     } else {
       const objs = doc.currentObjects.value
       let hit = null
       for (let i = objs.length - 1; i >= 0; i--) {
-        if (hitTest(objs[i], pt, 8 / scale.value)) { hit = objs[i]; break }
+        if (hitTest(objs[i], pt, hitPx / scale.value)) { hit = objs[i]; break }
       }
       if (hit) {
         doc.select(hit.id)
@@ -170,6 +190,14 @@ function onDown(e) {
 }
 
 function onMove(e) {
+  if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+  if (pinch) {
+    if (pointers.size >= 2) {
+      const [a, b] = [...pointers.values()]
+      props.doc.setZoom(pinchScale(pinch.scale, pinch.dist, distance(a, b)))
+    }
+    return
+  }
   if (!drag) return
   const doc = props.doc
   const pt = toPt(e)
@@ -186,6 +214,12 @@ function onMove(e) {
 }
 
 function onUp(e) {
+  pointers.delete(e.pointerId)
+  if (pinch) {
+    // 손가락을 모두 뗄 때까지 그리기·옮기기를 다시 시작하지 않는다
+    if (pointers.size === 0) pinch = null
+    return
+  }
   if (!drag) return
   const doc = props.doc
   if (drag.mode === 'draw') {

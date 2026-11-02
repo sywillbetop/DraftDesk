@@ -125,7 +125,7 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.app { display: flex; flex-direction: column; height: 100vh; }
+.app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
 .options { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 8px 12px; background: #eef2ff; border-bottom: 2px solid #9ca3af; }
 .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; font-size: 1.6rem; font-weight: bold; }
 .empty p { margin: 0; }

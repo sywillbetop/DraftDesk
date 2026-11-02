@@ -26,4 +26,10 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .count { font-size: 1.3rem; font-weight: bold; min-width: 90px; text-align: center; }
 .zoom { font-weight: bold; min-width: 64px; text-align: center; }
 .gap { width: 40px; }
+@media (max-width: 700px) {
+  .nav { flex-wrap: wrap; gap: 6px; }
+  .gap { flex-basis: 100%; width: auto; height: 0; }
+  button { padding: 0 10px; font-size: 1rem; }
+  .count { min-width: 70px; }
+}
 </style>

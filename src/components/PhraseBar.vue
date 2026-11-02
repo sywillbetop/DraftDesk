@@ -59,4 +59,8 @@ button { font-weight: bold; border-radius: 8px; border: 3px solid #1d4ed8; backg
 .typing { display: flex; gap: 8px; flex: 1; min-width: 280px; }
 input { flex: 1; min-height: 48px; font-size: 1.1rem; padding: 0 12px; border: 3px solid #1d4ed8; border-radius: 8px; box-sizing: border-box; }
 .add { min-height: 48px; padding: 0 20px; background: #1d4ed8; color: #fff; }
+@media (max-width: 700px) {
+  .typing { min-width: 0; flex-basis: 100%; }
+  .list { max-height: 30vh; }
+}
 </style>

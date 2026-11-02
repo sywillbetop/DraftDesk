@@ -32,4 +32,8 @@ button.open { background: #1d4ed8; color: #fff; }
 button.tool.on { background: #1d4ed8; color: #fff; }
 button.save { background: #15803d; border-color: #15803d; color: #fff; }
 button:disabled { opacity: 0.45; cursor: not-allowed; }
+@media (max-width: 700px) {
+  .topbar { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  button { min-height: 60px; font-size: 1rem; }
+}
 </style>
